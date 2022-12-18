@@ -1,4 +1,4 @@
-import init, {World, Direction} from 'snake_game';
+import init, {World, Direction, GameStatus} from 'snake_game';
 import {rnd} from './utils/rnd';
 
 init().then(wasm => {
@@ -12,6 +12,7 @@ init().then(wasm => {
 
     const gameControlBtn = document.getElementById('game-control-btn');
     const gameStatus = document.getElementById('game-status');
+    const gamePoints = document.getElementById('points');
     const canvas = <HTMLCanvasElement> document.getElementById('snake-canvas');
     const ctx = canvas.getContext("2d");
 
@@ -96,11 +97,15 @@ init().then(wasm => {
             world.snake_length()
         );
 
-        snakeCells.forEach((cellIdx, i) => {
+        snakeCells
+        // .filter((cellIdx, i) => !(i > 0 && cellIdx === snakeCells[0]))
+        .slice()
+        .reverse()
+        .forEach((cellIdx, i) => {
             const col = cellIdx % worldWidth;
             const row = Math.floor(cellIdx / worldWidth);
     
-            ctx.fillStyle = i === 0 ? "#7878db" : "#000000";
+            ctx.fillStyle = i === snakeCells.length - 1 ? "#7878db" : "#000000";
 
             ctx.beginPath();
             ctx.fillRect(col * CELL_SIZE, row*CELL_SIZE, CELL_SIZE, CELL_SIZE);
@@ -110,6 +115,7 @@ init().then(wasm => {
 
     function drawGameStatus() {
         gameStatus.textContent = world.game_status_text();
+        gamePoints.textContent = world.points().toString();
     }
 
     function paint () {
@@ -120,6 +126,13 @@ init().then(wasm => {
     }
 
     function play() {
+        const status = world.game_status();
+
+        if (status === GameStatus.Won || status === GameStatus.Lost) {
+            gameControlBtn.textContent = 'Re-Play';
+            return;
+        }
+        
         const fps = 10;
         setTimeout(() => {
             ctx.clearRect(0,0,canvas.width,canvas.height);
